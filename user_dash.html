@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vigilo Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent; /* remove blue tap */
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0e1117;
+    color: #e6edf3;
+    display: flex;
+}
+
+/* ===================== SIDEBAR ===================== */
+
+.sidebar {
+    width: 240px;
+    background: #161b22;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 25px 15px;
+    border-right: 1px solid #21262d;
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo i {
+    color: #58a6ff;
+}
+
+.nav-links {
+    flex: 1;
+}
+
+.nav-item {
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: background 0.2s;
+}
+
+.nav-item:hover {
+    background: #21262d;
+}
+
+.nav-item.active {
+    background: #1f2937;
+}
+
+.nav-item a {
+    color: #e6edf3;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+}
+
+.nav-item i {
+    width: 20px;
+}
+
+.logout {
+    padding: 12px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #1f2937;
+    transition: background 0.2s;
+}
+
+.logout:hover {
+    background: #2d333b;
+}
+
+.logout a {
+    color: #e6edf3;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+}
+
+/* ===================== MAIN CONTENT ===================== */
+
+.main {
+    flex: 1;
+    padding: 30px;
+}
+
+.header {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background: #161b22;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #21262d;
+    min-height: 120px;
+}
+
+/* ===================== MOBILE NAV ===================== */
+
+.mobile-nav {
+    display: none;
+}
+
+/* ===================== RESPONSIVE ===================== */
+
+@media (max-width: 768px) {
+
+    body {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .main {
+        padding: 20px;
+        padding-bottom: 80px; /* space for bottom nav */
+    }
+
+    .mobile-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #161b22;
+        border-top: 1px solid #21262d;
+        justify-content: space-around;
+        padding: 10px 0;
+        z-index: 100;
+    }
+
+    .mobile-nav .nav-item {
+        flex-direction: column;
+        font-size: 12px;
+        margin: 0;
+        padding: 5px;
+        text-align: center;
+    }
+
+    .mobile-nav .nav-item a {
+        color: #e6edf3;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .mobile-nav i {
+        font-size: 18px;
+        margin-bottom: 2px;
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+<div class="sidebar">
+    <div class="logo">
+        <i class="fas fa-eye"></i> VIGILO
+    </div>
+
+    <div class="nav-links">
+        <div class="nav-item active"><a href="user_dash.html"><i class="fas fa-video"></i>Live Feed</a></div>
+        <div class="nav-item"><a href="alerts.html"><i class="fas fa-bell"></i>Alerts</a></div>
+        <div class="nav-item"><a href="configure_alert.html"><i class="fas fa-sliders"></i>Config Alerts</a></div>
+        <div class="nav-item"><a href="profile.html"><i class="fas fa-user"></i>Profile</a></div>
+    </div>
+
+    <div class="logout">
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+</div>
+
+<!-- ================= MAIN ================= -->
+<div class="main">
+    <div class="header">Live Feed</div>
+
+    <div class="card-grid">
+        <div class="card">
+            <h4>Camera 1</h4>
+            <p>Live stream placeholder</p>
+        </div>
+
+        <div class="card">
+            <h4>Camera 2</h4>
+            <p>Live stream placeholder</p>
+        </div>
+
+        <div class="card">
+            <h4>System Status</h4>
+            <p>All systems operational</p>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MOBILE NAV ================= -->
+<div class="mobile-nav">
+    <div class="nav-item active"><a href="user_dash.html"><i class="fas fa-video"></i>Live Feed</a></div>
+    <div class="nav-item"><a href="alerts.html"><i class="fas fa-bell"></i>Alerts</a></div>
+    <div class="nav-item"><a href="configure_alert.html"><i class="fas fa-sliders"></i>Config Alerts</a></div>
+    <div class="nav-item"><a href="profile.html"><i class="fas fa-user"></i>Profile</a></div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vigilo · Configure Alerts</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:root {
+    --bg:        #0e1117;
+    --surface:   #161b22;
+    --surface2:  #1c2128;
+    --border:    #21262d;
+    --border2:   #30363d;
+    --text:      #e6edf3;
+    --muted:     #8b949e;
+    --dim:       #484f58;
+    --blue:      #58a6ff;
+    --green:     #3fb950;
+    --red:       #f85149;
+    --blue-dim:  #1a2742;
+    --green-dim: #0f2a1e;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ── SIDEBAR (unchanged) ── */
+.sidebar {
+    width: 240px;
+    background: var(--surface);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 25px 15px;
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+}
+.logo { font-size:20px; font-weight:700; margin-bottom:40px; display:flex; align-items:center; gap:10px; }
+.logo i { color: #ffffff; }
+.nav-links { flex:1; }
+
+/* Fixed navigation styling - white icons and text */
+.nav-item {
+    padding:12px 15px; border-radius:8px; margin-bottom:8px;
+    transition:background 0.2s;
+}
+.nav-item:hover  { background:#21262d; }
+.nav-item.active { background:#1f2937; }
+
+.nav-item a {
+    text-decoration: none;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+}
+
+.nav-item a:visited {
+    color: #ffffff;
+}
+
+.nav-item a:hover {
+    color: #ffffff;
+}
+
+.nav-item i {
+    width: 20px;
+    color: #ffffff;
+}
+
+/* Fixed logout styling */
+.logout {
+    padding:12px 15px; border-radius:8px;
+    background:#1f2937; cursor:pointer;
+}
+
+.logout a {
+    text-decoration: none;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+}
+
+.logout a:visited {
+    color: #ffffff;
+}
+
+.logout i {
+    color: #ffffff;
+}
+
+/* ── MAIN ── */
+.main {
+    flex: 1;
+    padding: 32px 36px;
+    overflow-y: auto;
+}
+
+.page-header { margin-bottom: 24px; }
+.page-header h1 { font-size:18px; font-weight:600; letter-spacing:-0.2px; }
+.page-header p  { font-size:13px; color:var(--muted); margin-top:4px; }
+
+/* ── ACCORDION LIST ── */
+.accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+    max-width: 720px;
+}
+
+/* ── ACCORDION ITEM ── */
+.acc-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+.acc-item:hover { border-color: var(--border2); }
+.acc-item.open  { border-color: var(--border2); }
+
+/* ── HEADER (the clickable title row) ── */
+.acc-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+    position: relative;
+}
+.acc-header:hover { background: var(--surface2); }
+.acc-item.open > .acc-header { background: var(--surface2); }
+
+.acc-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.acc-titles { flex: 1; min-width: 0; }
+.acc-title  { font-size:15px; font-weight:600; letter-spacing:-0.1px; }
+.acc-sub    { font-size:12px; color:#a0b0c0; margin-top:3px; font-weight:400; letter-spacing:0.1px; }
+
+/* Summary pills shown in closed state */
+.acc-pills {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 200px;
+}
+.acc-pill {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+.acc-pill-contact   { background: var(--green-dim); border:1px solid #1f5c40; color:#57cc99; }
+.acc-pill-responder { background: var(--blue-dim);  border:1px solid #1a3d7a; color:#79c0ff; }
+
+.acc-chevron {
+    font-size: 11px;
+    color: var(--dim);
+    transition: transform 0.25s;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+.acc-item.open > .acc-header .acc-chevron { transform: rotate(180deg); }
+
+/* ── BODY (collapsible) ── */
+.acc-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.28s ease;
+}
+.acc-item.open > .acc-body {
+    grid-template-rows: 1fr;
+}
+
+.acc-body-inner {
+    overflow: hidden;
+}
+
+.acc-content {
+    padding: 22px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ── FIELD ── */
+.field { display:flex; flex-direction:column; gap:8px; }
+.field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* ── PHONE INPUT ── */
+.input-row { display:flex; gap:8px; align-items:stretch; }
+
+.phone-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 7px;
+    overflow: hidden;
+    flex: 1;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.phone-wrap:focus-within { border-color:var(--blue); box-shadow:0 0 0 3px rgba(88,166,255,0.08); }
+.phone-wrap.is-error     { border-color:var(--red);  box-shadow:0 0 0 3px rgba(248,81,73,0.08); }
+.phone-wrap.is-valid     { border-color:var(--green); box-shadow:0 0 0 3px rgba(63,185,80,0.08); }
+
+.phone-prefix {
+    padding: 0 12px;
+    font-size: 12px;
+    color: var(--dim);
+    border-right: 1px solid var(--border2);
+    height: 40px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    background: var(--surface2);
+}
+.phone-prefix i { font-size:11px; }
+
+.contact-input {
+    flex: 1;
+    height: 40px;
+    padding: 0 12px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    min-width: 0;
+}
+.contact-input::placeholder { color:var(--dim); }
+
+.phone-status {
+    width: 34px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+    transition: opacity 0.2s;
+    opacity: 0;
+}
+.phone-wrap.is-valid .phone-status { color:var(--green); opacity:1; }
+.phone-wrap.is-error .phone-status { color:var(--red);   opacity:1; }
+
+.add-btn {
+    height: 40px;
+    padding: 0 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--blue);
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s;
+}
+.add-btn:hover { background:#253040; border-color:var(--blue); }
+
+.err-msg {
+    font-size: 12px;
+    color: var(--red);
+    display: none;
+    align-items: center;
+    gap: 5px;
+}
+.err-msg.visible { display:flex; }
+
+/* ── MULTISELECT ── */
+.custom-multiselect { position:relative; }
+
+.ms-trigger {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    border-radius: 7px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.ms-trigger:hover,
+.ms-trigger.open { border-color:var(--blue); box-shadow:0 0 0 3px rgba(88,166,255,0.08); }
+
+.ms-label      { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ms-label.empty { color:var(--dim); }
+
+.ms-count {
+    background: var(--blue-dim);
+    color: var(--blue);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    display: none;
+}
+.ms-count.visible { display:inline-flex; }
+
+.ms-chevron {
+    font-size: 10px;
+    color: var(--dim);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+.ms-trigger.open .ms-chevron { transform:rotate(180deg); }
+
+.ms-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0; right: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    z-index: 200;
+    overflow: hidden;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+}
+.ms-dropdown.open { display:block; }
+
+.ms-option {
+    padding: 11px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    transition: background 0.12s;
+}
+.ms-option:not(:last-child) { border-bottom:1px solid var(--border); }
+.ms-option:hover    { background:#21262d; color:var(--text); }
+.ms-option.selected { color:var(--text); }
+
+.ms-check {
+    width: 15px; height: 15px;
+    border: 1.5px solid var(--border2);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 9px; font-weight: 800;
+    color: transparent;
+    transition: all 0.15s;
+}
+.ms-option.selected .ms-check { background:var(--blue); border-color:var(--blue); color:#0e1117; }
+.ms-opt-label { flex:1; }
+
+/* ── TOGGLE ── */
+.toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+.toggle-label { font-size:13px; color:var(--muted); }
+.switch { position:relative; width:36px; height:18px; flex-shrink:0; }
+.switch input { opacity:0; width:0; height:0; position:absolute; }
+.slider {
+    position:absolute; cursor:pointer;
+    top:0; left:0; right:0; bottom:0;
+    background:var(--border2); transition:.25s; border-radius:18px;
+}
+.slider:before {
+    position:absolute; content:"";
+    height:14px; width:14px; left:2px; bottom:2px;
+    background:#fff; transition:.25s; border-radius:50%;
+}
+input:checked + .slider              { background:var(--blue); }
+input:checked + .slider:before       { transform:translateX(18px); }
+
+/* ── ASSIGNED ── */
+.assigned-panel {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #0d1117;
+}
+
+.assigned-empty {
+    font-size: 13px;
+    color: var(--dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.assigned-empty i { font-size:11px; }
+
+.assigned-group { display:flex; flex-direction:column; gap:6px; }
+.assigned-label {
+    font-size: 11px; font-weight:600;
+    text-transform: uppercase; letter-spacing:0.5px;
+    color: var(--muted);
+}
+.badge-row { display:flex; flex-wrap:wrap; gap:6px; }
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px 4px 9px;
+    border-radius: 6px;
+    font-size: 12px; font-weight:500;
+    animation: pop 0.15s ease;
+}
+@keyframes pop {
+    from { transform:scale(0.8); opacity:0; }
+    to   { transform:scale(1);   opacity:1; }
+}
+.badge-contact  { background:var(--green-dim); border:1px solid #1f5c40; color:#57cc99; }
+.badge-responder{ background:var(--blue-dim);  border:1px solid #1a3d7a; color:#79c0ff; }
+.badge i { font-size:9px; opacity:0.8; }
+.badge-x {
+    cursor:pointer; opacity:0.45; font-size:9px;
+    font-weight:700; margin-left:2px;
+    transition:opacity 0.15s;
+}
+.badge-x:hover { opacity:1; }
+
+/* ── SHAKE ── */
+@keyframes shake {
+    0%,100%{ transform:translateX(0); }
+    20%    { transform:translateX(-4px); }
+    60%    { transform:translateX(4px); }
+    80%    { transform:translateX(-2px); }
+}
+.shaking { animation:shake 0.28s ease; }
+
+/* ── MOBILE ── */
+.mobile-nav { display:none; }
+@media (max-width:768px) {
+    body { flex-direction:column; }
+    .sidebar { display:none; }
+    .main { padding:20px; padding-bottom:80px; }
+    .accordion { max-width:100%; }
+    .mobile-nav {
+        display:flex; position:fixed; bottom:0; width:100%;
+        background:var(--surface); border-top:1px solid var(--border);
+        justify-content:space-around; padding:10px 0; z-index:200;
+    }
+    .mobile-nav a {
+        text-decoration:none; color:#ffffff; font-size:12px;
+        display:flex; flex-direction:column; align-items:center; gap:3px;
+    }
+    .mobile-nav a:visited {
+        color:#ffffff;
+    }
+    .mobile-nav i {
+        color:#ffffff;
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="logo"><i class="fas fa-eye"></i> VIGILO</div>
+    <div class="nav-links">
+        <div class="nav-item"><a href="user_dash.html"><i class="fas fa-video"></i> Live Feed</a></div>
+        <div class="nav-item"><a href="alerts.html"><i class="fas fa-bell"></i> Alerts</a></div>
+        <div class="nav-item active"><a href="configure_alert.html"><i class="fas fa-sliders"></i> Configure Alerts</a></div>
+        <div class="nav-item"><a href="profile.html"><i class="fas fa-user"></i> Profile</a></div>
+    </div>
+    <div class="logout"><a href="logout.html"><i class="fas fa-sign-out-alt"></i> Logout</a></div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+    <div class="page-header">
+        <h1>Alert Routing</h1>
+        <p>Configure contacts and responders for each alert type.</p>
+    </div>
+    <div class="accordion" id="accordion"></div>
+</div>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav">
+    <a href="user_dash.html"><i class="fas fa-video"></i>Live</a>
+    <a href="alerts.html"><i class="fas fa-bell"></i>Alerts</a>
+    <a href="configure_alert.html"><i class="fas fa-sliders"></i>Config</a>
+    <a href="profile.html"><i class="fas fa-user"></i>Profile</a>
+</div>
+
+<script>
+const CARDS = [
+    { id:'sos',       emoji:'🚨', title:'SOS Alert',          sub:'Manual distress trigger',      responders:['Police','Medical','Fire Department'], toggle:'Immediate Dispatch',         color:'#f85149', bg:'#1c0d0d' },
+    { id:'fire',      emoji:'🔥', title:'Fire & Explosion',   sub:'Thermal & smoke detection',    responders:['Medical','Police','Fire Department'],  toggle:'Immediate Dispatch',         color:'#e3b341', bg:'#1c1600' },
+    { id:'violence',  emoji:'⚠️', title:'Violence / Assault', sub:'Aggression detection',         responders:['Police','Medical'],                    toggle:'Escalate if unacknowledged', color:'#ff7b72', bg:'#1c0e0e' },
+    { id:'accidents', emoji:'🚗', title:'Accidents',          sub:'Collision & impact events',    responders:['Medical','Police','Fire Department'],  toggle:'Immediate Dispatch',         color:'#58a6ff', bg:'#0f1e33' },
+    { id:'fall',      emoji:'🧍', title:'Fall Detection',     sub:'Person-down events',           responders:['Medical','Police'],                    toggle:'Auto-notify on detection',   color:'#a5d6ff', bg:'#0d1a2a' },
+    { id:'theft',     emoji:'🔒', title:'Theft',              sub:'Unauthorised access / theft',  responders:['Police','Security'],                   toggle:'Escalate if unacknowledged', color:'#d2a8ff', bg:'#1a0d2e' },
+];
+
+const ICONS = {
+    'Police':          'shield-halved',
+    'Medical':         'kit-medical',
+    'Fire Department': 'fire-extinguisher',
+    'Security':        'user-shield',
+};
+
+/* ── Build each accordion item ── */
+function buildItem(c) {
+    const opts = c.responders.map(r => `
+        <div class="ms-option" data-value="${r}" onclick="toggleOption(this)">
+            <span class="ms-check">✓</span>
+            <span class="ms-opt-label">${r}</span>
+        </div>`).join('');
+
+    return `
+    <div class="acc-item" data-card="${c.id}">
+
+        <!-- ── Clickable title row ── -->
+        <div class="acc-header" onclick="toggleAccordion(this)">
+            <div class="acc-icon" style="background:${c.bg}; color:${c.color};">${c.emoji}</div>
+            <div class="acc-titles">
+                <div class="acc-title">${c.title}</div>
+                <div class="acc-sub">${c.sub}</div>
+            </div>
+            <div class="acc-pills"></div>
+            <i class="fas fa-chevron-down acc-chevron"></i>
+        </div>
+
+        <!-- ── Collapsible body ── -->
+        <div class="acc-body">
+            <div class="acc-body-inner">
+                <div class="acc-content">
+
+                    <!-- Phone -->
+                    <div class="field">
+                        <div class="field-label">Contact Number</div>
+                        <div class="input-row">
+                            <div class="phone-wrap">
+                                <div class="phone-prefix"><i class="fas fa-phone"></i></div>
+                                <input type="text" class="contact-input"
+                                    placeholder="Enter phone number"
+                                    oninput="liveValidate(this)">
+                                <div class="phone-status">
+                                    <i class="fas fa-check js-ok"   style="display:none"></i>
+                                    <i class="fas fa-xmark js-err"  style="display:none"></i>
+                                </div>
+                            </div>
+                            <button class="add-btn" onclick="addContact(this)">
+                                <i class="fas fa-plus"></i> Add
+                            </button>
+                        </div>
+                        <div class="err-msg">
+                            <i class="fas fa-circle-exclamation"></i>
+                            <span class="err-text"></span>
+                        </div>
+                    </div>
+
+                    <!-- Multiselect -->
+                    <div class="field">
+                        <div class="field-label">Emergency Responders</div>
+                        <div class="custom-multiselect">
+                            <div class="ms-trigger" onclick="toggleDropdown(this)">
+                                <span class="ms-label empty">Select responders</span>
+                                <span class="ms-count"></span>
+                                <i class="fas fa-chevron-down ms-chevron"></i>
+                            </div>
+                            <div class="ms-dropdown">${opts}</div>
+                        </div>
+                    </div>
+
+                    <!-- Toggle -->
+                    <div class="toggle-row">
+                        <span class="toggle-label">${c.toggle}</span>
+                        <label class="switch">
+                            <input type="checkbox"><span class="slider"></span>
+                        </label>
+                    </div>
+
+                </div>
+
+                <!-- Assigned panel (inside body so it collapses too) -->
+                <div class="assigned-panel">
+                    <div class="assigned-empty">
+                        <i class="fas fa-circle-dashed"></i> Nothing assigned yet
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>`;
+}
+
+document.getElementById('accordion').innerHTML = CARDS.map(buildItem).join('');
+
+
+/* ══════════════════════════════════════
+   ACCORDION TOGGLE
+══════════════════════════════════════ */
+function toggleAccordion(header) {
+    const item    = header.closest('.acc-item');
+    const isOpen  = item.classList.contains('open');
+
+    /* Close all */
+    document.querySelectorAll('.acc-item.open').forEach(el => el.classList.remove('open'));
+
+    /* Open clicked (unless it was already open — click again to close) */
+    if (!isOpen) item.classList.add('open');
+}
+
+
+/* ══════════════════════════════════════
+   PHONE VALIDATION
+══════════════════════════════════════ */
+function validatePhone(raw) {
+    if (!raw) return { ok:false, msg:null };
+    if (/[a-zA-Z@]/.test(raw))           return { ok:false, msg:'Phone numbers only' };
+    if (!/^[+\d\s\-().]+$/.test(raw))    return { ok:false, msg:'Invalid characters in number' };
+    const d = raw.replace(/\D/g,'');
+    if (d.length < 7)  return { ok:false, msg:'Number is too short' };
+    if (d.length > 15) return { ok:false, msg:'Number is too long' };
+    return { ok:true };
+}
+
+function getWrap(input)    { return input.closest('.phone-wrap'); }
+function getErrEl(input)   { return input.closest('.field').querySelector('.err-msg'); }
+function getErrText(input) { return input.closest('.field').querySelector('.err-text'); }
+
+function setValid(input) {
+    const w = getWrap(input);
+    w.classList.remove('is-error'); w.classList.add('is-valid');
+    w.querySelector('.js-ok').style.display  = '';
+    w.querySelector('.js-err').style.display = 'none';
+    getErrEl(input).classList.remove('visible');
+}
+
+function setError(input, msg) {
+    const w = getWrap(input);
+    w.classList.remove('is-valid'); w.classList.add('is-error');
+    w.querySelector('.js-ok').style.display  = 'none';
+    w.querySelector('.js-err').style.display = '';
+    getErrText(input).textContent = msg;
+    getErrEl(input).classList.add('visible');
+}
+
+function clearState(input) {
+    const w = getWrap(input);
+    w.classList.remove('is-valid','is-error');
+    w.querySelector('.js-ok').style.display  = 'none';
+    w.querySelector('.js-err').style.display = 'none';
+    getErrEl(input).classList.remove('visible');
+}
+
+function liveValidate(input) {
+    const val = input.value.trim();
+    if (!val) { clearState(input); return; }
+    const { ok, msg } = validatePhone(val);
+    ok ? setValid(input) : setError(input, msg);
+}
+
+function triggerShake(input) {
+    input.classList.remove('shaking');
+    void input.offsetWidth;
+    input.classList.add('shaking');
+    input.addEventListener('animationend', () => input.classList.remove('shaking'), { once:true });
+}
+
+
+/* ══════════════════════════════════════
+   ADD CONTACT
+══════════════════════════════════════ */
+function addContact(btn) {
+    const input = btn.closest('.input-row').querySelector('.contact-input');
+    const val   = input.value.trim();
+    const card  = btn.closest('.acc-item');
+
+    if (!val) {
+        setError(input,'Enter a phone number first');
+        triggerShake(input); input.focus(); return;
+    }
+    const { ok, msg } = validatePhone(val);
+    if (!ok) {
+        setError(input, msg); triggerShake(input); input.focus(); return;
+    }
+    card._contacts = card._contacts || [];
+    if (card._contacts.includes(val)) {
+        setError(input,'Number already added'); triggerShake(input); return;
+    }
+    card._contacts.push(val);
+    input.value = '';
+    clearState(input);
+    renderAssigned(card);
+}
+
+
+/* ══════════════════════════════════════
+   MULTISELECT
+══════════════════════════════════════ */
+function toggleDropdown(trigger) {
+    const dd   = trigger.nextElementSibling;
+    const open = dd.classList.contains('open');
+    document.querySelectorAll('.ms-dropdown.open').forEach(d => {
+        d.classList.remove('open');
+        d.previousElementSibling.classList.remove('open');
+    });
+    if (!open) { dd.classList.add('open'); trigger.classList.add('open'); }
+}
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('.custom-multiselect')) {
+        document.querySelectorAll('.ms-dropdown.open').forEach(d => {
+            d.classList.remove('open');
+            d.previousElementSibling.classList.remove('open');
+        });
+    }
+});
+
+function toggleOption(opt) {
+    opt.classList.toggle('selected');
+    const dd       = opt.closest('.ms-dropdown');
+    const trigger  = dd.previousElementSibling;
+    const selected = [...dd.querySelectorAll('.ms-option.selected')].map(o => o.dataset.value);
+    const lbl      = trigger.querySelector('.ms-label');
+    const cnt      = trigger.querySelector('.ms-count');
+    if (selected.length) {
+        lbl.textContent = selected.join(', ');
+        lbl.classList.remove('empty');
+        cnt.textContent = selected.length;
+        cnt.classList.add('visible');
+    } else {
+        lbl.textContent = 'Select responders';
+        lbl.classList.add('empty');
+        cnt.classList.remove('visible');
+    }
+    renderAssigned(opt.closest('.acc-item'));
+}
+
+
+/* ══════════════════════════════════════
+   REMOVE BADGE
+══════════════════════════════════════ */
+function removeBadge(itemEl, val) {
+    itemEl._contacts = (itemEl._contacts || []).filter(c => c !== val);
+    renderAssigned(itemEl);
+}
+
+
+/* ══════════════════════════════════════
+   RENDER ASSIGNED + HEADER PILLS
+══════════════════════════════════════ */
+function renderAssigned(item) {
+    const panel      = item.querySelector('.assigned-panel');
+    const contacts   = item._contacts || [];
+    const responders = [...item.querySelectorAll('.ms-option.selected')].map(o => o.dataset.value);
+
+    /* ── Assigned panel ── */
+    if (!contacts.length && !responders.length) {
+        panel.innerHTML = `<div class="assigned-empty">
+            <i class="fas fa-circle-dashed"></i> Nothing assigned yet</div>`;
+    } else {
+        let html = '';
+        if (contacts.length) {
+            html += `<div class="assigned-group"><div class="assigned-label">Contacts</div><div class="badge-row">`;
+            contacts.forEach(c => {
+                const s = c.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                html += `<span class="badge badge-contact"><i class="fas fa-phone"></i>${c}
+                    <span class="badge-x" onclick="removeBadge(this.closest('.acc-item'),'${s}')">✕</span>
+                </span>`;
+            });
+            html += `</div></div>`;
+        }
+        if (responders.length) {
+            html += `<div class="assigned-group"><div class="assigned-label">Responders</div><div class="badge-row">`;
+            responders.forEach(r => {
+                html += `<span class="badge badge-responder"><i class="fas fa-${ICONS[r]||'star'}"></i>${r}</span>`;
+            });
+            html += `</div></div>`;
+        }
+        panel.innerHTML = html;
+    }
+
+    /* ── Header pills (visible when collapsed) ── */
+    const pillsEl = item.querySelector('.acc-pills');
+    let pillHtml  = '';
+
+    contacts.forEach(c => {
+        pillHtml += `<span class="acc-pill acc-pill-contact"><i class="fas fa-phone" style="font-size:9px;margin-right:3px"></i>${c}</span>`;
+    });
+    responders.forEach(r => {
+        pillHtml += `<span class="acc-pill acc-pill-responder">${r}</span>`;
+    });
+    pillsEl.innerHTML = pillHtml;
+}
+
+
+/* ── Enter key ── */
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.classList.contains('contact-input'))
+        e.target.closest('.input-row').querySelector('.add-btn').click();
+});
+</script>
+</body>
+</html>
